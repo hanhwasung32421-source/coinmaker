@@ -765,9 +765,7 @@
       });
     }
   }
-    // 최초 진입: 무조건 LONG/SHORT부터 선택 → 기준진입가 입력까지 완료해야 넘어감
-    showModalStep("side");
-  }
+
 
   function computeCropRect() {
     const W = CANVAS_W;
@@ -1152,6 +1150,8 @@
   async function init() {
     bind();
     bindSideUi();
+    // 최초 진입: 무조건 LONG/SHORT부터 선택 → 기준진입가 입력까지 완료해야 넘어감
+    showModalStep("side");
     await ensureFontsReady();
 
     if (bgImg.complete) {
