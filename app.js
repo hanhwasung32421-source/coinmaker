@@ -61,6 +61,8 @@
     modal: document.getElementById("sideModal"),
     modalLong: document.getElementById("modalSideLong"),
     modalShort: document.getElementById("modalSideShort"),
+    modalEntry5: document.getElementById("modalEntry5"),
+    modalEntryErr: document.getElementById("modalEntryError"),
   };
 
   let lastPresetPhrase = "";
@@ -698,21 +700,73 @@
     renderAll();
   }
 
+  function showModalStep(stepName) {
+    if (!sideUi.modal) return;
+    sideUi.modal.classList.remove("hidden");
+    sideUi.modal.querySelectorAll(".modal-step").forEach((el) => {
+      el.classList.toggle("active", el.getAttribute("data-step") === stepName);
+    });
+    if (stepName === "entry") {
+      if (sideUi.modalEntryErr) sideUi.modalEntryErr.textContent = "";
+      if (sideUi.modalEntry5) {
+        // 항상 0. + 5자리 입력만 받기
+        sideUi.modalEntry5.value = "";
+        setTimeout(() => sideUi.modalEntry5?.focus(), 0);
+      }
+    }
+  }
+
+  function isValidEntry5(s) {
+    return /^\d{5}$/.test(String(s || ""));
+  }
+
+  function applyEntryFromModal(entry5) {
+    const v = `0.${entry5}`;
+    if (els.entry) els.entry.value = v;
+    // 진입가 기반 랜덤(실제진입가)도 새 기준으로 다시 계산되게
+    sampleEntry = null;
+    lastEntryBase = null;
+    renderAll();
+  }
+
   function bindSideUi() {
     // 메인 버튼
     if (sideUi.longBtn) sideUi.longBtn.addEventListener("click", () => setSide("LONG", { closeModal: false }));
     if (sideUi.shortBtn) sideUi.shortBtn.addEventListener("click", () => setSide("SHORT", { closeModal: false }));
 
-    // 모달 버튼(최초 진입 강제)
-    if (sideUi.modalLong) sideUi.modalLong.addEventListener("click", () => setSide("LONG", { closeModal: true }));
-    if (sideUi.modalShort) sideUi.modalShort.addEventListener("click", () => setSide("SHORT", { closeModal: true }));
+    // 모달 버튼(최초 진입 강제) → 다음 단계(기준진입가)로 이동
+    if (sideUi.modalLong)
+      sideUi.modalLong.addEventListener("click", () => {
+        setSide("LONG", { closeModal: false });
+        showModalStep("entry");
+      });
+    if (sideUi.modalShort)
+      sideUi.modalShort.addEventListener("click", () => {
+        setSide("SHORT", { closeModal: false });
+        showModalStep("entry");
+      });
 
-    // 최초 로딩 시 모달 띄우기 (값이 없으면)
-    if (sideUi.modal) {
-      const v = String(els.side?.value || "").trim();
-      if (!v) sideUi.modal.classList.remove("hidden");
-      else sideUi.modal.classList.add("hidden");
+    // 기준진입가 입력(Enter로 확정)
+    if (sideUi.modalEntry5) {
+      sideUi.modalEntry5.addEventListener("input", () => {
+        // 숫자만 허용
+        sideUi.modalEntry5.value = sideUi.modalEntry5.value.replace(/[^\d]/g, "").slice(0, 5);
+      });
+      sideUi.modalEntry5.addEventListener("keydown", (ev) => {
+        if (ev.key !== "Enter") return;
+        ev.preventDefault();
+        const v = sideUi.modalEntry5.value;
+        if (!isValidEntry5(v)) {
+          if (sideUi.modalEntryErr) sideUi.modalEntryErr.textContent = "5자리 숫자를 입력하세요.";
+          return;
+        }
+        applyEntryFromModal(v);
+        if (sideUi.modal) sideUi.modal.classList.add("hidden");
+      });
     }
+  }
+    // 최초 진입: 무조건 LONG/SHORT부터 선택 → 기준진입가 입력까지 완료해야 넘어감
+    showModalStep("side");
   }
 
   function computeCropRect() {
