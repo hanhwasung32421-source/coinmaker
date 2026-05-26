@@ -159,6 +159,31 @@ canvas{
   transform: translateY(0);
 }
 
+.center-tip{
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) scale(.98);
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(15,20,32,.92);
+  color: #e7eefc;
+  font-size: 14px;
+  font-weight: 800;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .15s ease, transform .15s ease;
+  z-index: 9999;
+  text-align: center;
+  min-width: 220px;
+}
+
+.center-tip.show{
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
 .pick-hint{
   margin-top:8px;
   color:var(--muted);

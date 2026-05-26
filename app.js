@@ -7,6 +7,7 @@
   const canvas = document.getElementById("cardCanvas");
   const ctx = canvas.getContext("2d");
   const toastEl = document.getElementById("toast");
+  const centerTipEl = document.getElementById("centerTip");
   const croppedPreviewImg = document.getElementById("croppedPreviewImg");
   let lastCroppedPreviewUrl = null;
 
@@ -78,6 +79,15 @@
     clearTimeout(showToast._t);
     showToast._t = setTimeout(() => toastEl.classList.remove("show"), ms);
   }
+
+  function showCenterTip(message, ms = 1000) {
+    if (!centerTipEl) return;
+    centerTipEl.textContent = message;
+    centerTipEl.classList.add("show");
+    clearTimeout(showCenterTip._t);
+    showCenterTip._t = setTimeout(() => centerTipEl.classList.remove("show"), ms);
+  }
+  showCenterTip._t = null;
 
   async function copyTextWithSelection(text) {
     const t = String(text || "");
@@ -1003,7 +1013,11 @@
         lastPresetPhrase = phrase;
         const presetId = btn.getAttribute("data-preset");
         const caption = presetId ? document.querySelector(`.preset-caption[data-preset="${presetId}"]`) : null;
-        if (caption) caption.textContent = phrase;
+        if (caption) {
+          caption.textContent = phrase;
+          // 프리셋 클릭만 해도 문구가 "드래그(선택)"된 상태로 보이게
+          selectElementText(caption);
+        }
 
         // 1) 프리셋 첫 클릭 시 2초 팝업
         if (!firstPresetHintShown) {
@@ -1018,7 +1032,10 @@
         const entryTs = getTs(LS_ENTRY_TS);
         const sideOk = sideSelected && now - sideTs < ONE_HOUR_MS;
         const entryOk = entryTs > 0 && now - entryTs < ONE_HOUR_MS;
-        if (!sideOk || !entryOk) {
+        if (!sideSelected) {
+          // 롱/숏을 아직 안 눌렀으면: 중앙 툴팁 1초
+          showCenterTip("롱/숏 확인하세요", 1000);
+        } else if (!sideOk || !entryOk) {
           showToastFor("롱/숏·진입가 확인하세요", 2000);
         }
 
