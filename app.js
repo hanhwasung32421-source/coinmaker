@@ -76,6 +76,38 @@
   }
   showToast._t = null;
 
+  async function copyTextWithSelection(text) {
+    const t = String(text || "");
+    if (!t.trim()) return false;
+
+    // 1) clipboard API 우선
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(t);
+        return true;
+      } catch {
+        // fallthrough
+      }
+    }
+
+    // 2) fallback: 임시 textarea 생성 후 전체 선택 + execCommand
+    const ta = document.createElement("textarea");
+    ta.value = t;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.left = "-9999px";
+    ta.style.top = "0";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select(); // "전체 선택" 느낌
+    try {
+      const ok = document.execCommand && document.execCommand("copy");
+      return !!ok;
+    } finally {
+      document.body.removeChild(ta);
+    }
+  }
+
   function randFloat(min, max) {
     return Math.random() * (max - min) + min;
   }
@@ -92,9 +124,19 @@
     const fmt = ["int", "2", "1"][Math.floor(Math.random() * 3)];
     const absP = Math.abs(Number(percentValue) || 0);
     let numText = "";
-    if (fmt === "int") numText = String(Math.round(absP));
-    else if (fmt === "1") numText = absP.toFixed(1);
-    else numText = absP.toFixed(2);
+    // 반올림 금지: 버림(Trunc)으로 처리
+    if (fmt === "int") {
+      numText = String(Math.floor(absP));
+    } else if (fmt === "1") {
+      const v = Math.floor(absP * 10) / 10;
+      numText = v.toFixed(1);
+    } else {
+      const v = Math.floor(absP * 100) / 100;
+      numText = v.toFixed(2);
+    }
+
+    // "##.0" 같은 경우 .0은 표시하지 않음
+    if (numText.endsWith(".0")) numText = numText.slice(0, -2);
 
     // 2번 : % / 프로 / 퍼 / (빈칸)
     const unit = ["%", "프로", "퍼", ""][Math.floor(Math.random() * 4)];
@@ -989,6 +1031,18 @@
           console.error(e);
           showToast("클립보드 복사 실패(HTTPS에서만 가능)");
         }
+      });
+    });
+
+    // 프리셋 아래 문구 클릭 시: 한 번 클릭으로 전체 복사
+    document.querySelectorAll(".preset-caption").forEach((cap) => {
+      cap.addEventListener("click", async () => {
+        const text = cap.textContent || "";
+        const ok = await copyTextWithSelection(text);
+        if (!ok) return;
+        cap.classList.add("copied");
+        setTimeout(() => cap.classList.remove("copied"), 600);
+        showToast("문구 복사됨");
       });
     });
     if (els.downloadZip) els.downloadZip.addEventListener("click", downloadZip);
