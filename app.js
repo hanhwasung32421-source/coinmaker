@@ -663,12 +663,14 @@
       let dx = (CANVAS_W - dw) / 2 + getBgShiftX();
       let dy = (CANVAS_H - dh) / 2 + getBgShiftY();
 
-      // 너무 멀리 가서 완전히 사라지지 않도록, 화면 안에 머물게 clamp
-      if (dw <= CANVAS_W) dx = Math.max(0, Math.min(dx, CANVAS_W - dw));
-      else dx = Math.max(CANVAS_W - dw, Math.min(dx, 0));
+      // 축소 상태에서는 이동 시 약간의 여백(검은 영역)이 생길 수 있어도 이동을 허용
+      // (이미지가 캔버스보다 작거나, 어떤 축은 딱 맞는 경우도 이동이 되게)
+      const PAD = 200; // overscroll 허용 픽셀
+      if (dw <= CANVAS_W) dx = Math.max(-PAD, Math.min(dx, CANVAS_W - dw + PAD));
+      else dx = Math.max(CANVAS_W - dw - PAD, Math.min(dx, 0 + PAD));
 
-      if (dh <= CANVAS_H) dy = Math.max(0, Math.min(dy, CANVAS_H - dh));
-      else dy = Math.max(CANVAS_H - dh, Math.min(dy, 0));
+      if (dh <= CANVAS_H) dy = Math.max(-PAD, Math.min(dy, CANVAS_H - dh + PAD));
+      else dy = Math.max(CANVAS_H - dh - PAD, Math.min(dy, 0 + PAD));
 
       targetCtx.drawImage(bgImg, dx, dy, dw, dh);
       return;
@@ -678,14 +680,36 @@
     // 배경 이동: +X(오른쪽) => crop window를 왼쪽으로(sx 감소)
     const sx0 = (iw - sw) / 2;
     const sy0 = (ih - sh) / 2;
+    const slackX = iw - sw; // source에서 움직일 수 있는 여유
+    const slackY = ih - sh;
+
+    // 어떤 축이 "여유가 0"이면(crop 불가) 기존 방식으로는 이동이 안 되므로
+    // 그 축은 dest 이동으로 처리하여(빈 여백이 생길 수 있어도) 이동을 가능하게 함.
+    let dx = 0;
+    let dy = 0;
+
     const shiftXSrc = getBgShiftX() / scale;
     const shiftYSrc = getBgShiftY() / scale;
-    let sx = sx0 - shiftXSrc;
-    let sy = sy0 - shiftYSrc;
+    let sx = sx0;
+    let sy = sy0;
+
+    if (slackX > 0) sx = sx0 - shiftXSrc;
+    else dx = getBgShiftX();
+
+    if (slackY > 0) sy = sy0 - shiftYSrc;
+    else dy = getBgShiftY();
 
     sy = Math.max(0, Math.min(sy, ih - sh));
     sx = Math.max(0, Math.min(sx, iw - sw));
-    targetCtx.drawImage(bgImg, sx, sy, sw, sh, 0, 0, CANVAS_W, CANVAS_H);
+
+    // dest 이동에도 약간의 overscroll 허용(완전히 화면 밖으로는 안 나가게)
+    if (dx !== 0 || dy !== 0) {
+      const PAD = 200;
+      dx = Math.max(-PAD, Math.min(dx, PAD));
+      dy = Math.max(-PAD, Math.min(dy, PAD));
+    }
+
+    targetCtx.drawImage(bgImg, sx, sy, sw, sh, dx, dy, CANVAS_W, CANVAS_H);
   }
 
   function drawBackgroundCover() {
