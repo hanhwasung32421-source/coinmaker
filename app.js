@@ -646,9 +646,35 @@
 
     // zoom < 1.0: 더 넓게 보이도록(덜 확대) / zoom > 1.0: 더 확대
     const zoom = getBgZoom();
-    const scale = Math.max(CANVAS_W / iw, CANVAS_H / ih) * zoom;
+    const baseScale = Math.max(CANVAS_W / iw, CANVAS_H / ih);
+    const scale = baseScale * zoom;
+
+    // zoom으로 축소되면(sw/sh가 원본보다 커지면) crop 방식으로는 더 이상 이동이 먹지 않습니다.
+    // 이 경우에는 "축소된 이미지"를 캔버스 위에 올려두고(=dest 좌표 이동) 이동을 적용합니다.
     const sw = CANVAS_W / scale;
     const sh = CANVAS_H / scale;
+    const needsDestPan = sw >= iw || sh >= ih;
+
+    if (needsDestPan) {
+      // dest(캔버스) 공간에서 이동: zoom<1인 경우에도 항상 이동 가능
+      const dw = iw * scale;
+      const dh = ih * scale;
+      // 기본은 중앙 정렬
+      let dx = (CANVAS_W - dw) / 2 + getBgShiftX();
+      let dy = (CANVAS_H - dh) / 2 + getBgShiftY();
+
+      // 너무 멀리 가서 완전히 사라지지 않도록, 화면 안에 머물게 clamp
+      if (dw <= CANVAS_W) dx = Math.max(0, Math.min(dx, CANVAS_W - dw));
+      else dx = Math.max(CANVAS_W - dw, Math.min(dx, 0));
+
+      if (dh <= CANVAS_H) dy = Math.max(0, Math.min(dy, CANVAS_H - dh));
+      else dy = Math.max(CANVAS_H - dh, Math.min(dy, 0));
+
+      targetCtx.drawImage(bgImg, dx, dy, dw, dh);
+      return;
+    }
+
+    // 기본(cover) 모드: crop(source) 방식으로 이동
     // 배경 이동: +X(오른쪽) => crop window를 왼쪽으로(sx 감소)
     const sx0 = (iw - sw) / 2;
     const sy0 = (ih - sh) / 2;
