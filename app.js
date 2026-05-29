@@ -8,8 +8,7 @@
   const ctx = canvas.getContext("2d");
   const toastEl = document.getElementById("toast");
   const centerTipEl = document.getElementById("centerTip");
-  const croppedPreviewImg = document.getElementById("croppedPreviewImg");
-  let lastCroppedPreviewUrl = null;
+  // (프리셋/크롭 미리보기 UI 제거됨)
 
   const els = {
     percentMin: document.getElementById("inpPercentMin"),
@@ -60,8 +59,6 @@
     longBtn: document.getElementById("btnSideLong"),
     shortBtn: document.getElementById("btnSideShort"),
   };
-
-  let lastPresetPhrase = "";
 
   function showToast(message) {
     if (!toastEl) return;
@@ -853,38 +850,6 @@
     return { x, y, w, h };
   }
 
-  async function copyCanvasToClipboardAndPreview() {
-    // ClipboardItem은 HTTPS 환경에서 안정적으로 동작 (Vercel 권장)
-    if (!navigator.clipboard || typeof ClipboardItem === "undefined") {
-      throw new Error("클립보드 API를 지원하지 않습니다.");
-    }
-
-    const crop = computeCropRect();
-    const scale = randFloat(0.7, 1.2);
-    const outW = Math.max(1, Math.round(crop.w * scale));
-    const outH = Math.max(1, Math.round(crop.h * scale));
-
-    const off = document.createElement("canvas");
-    off.width = outW;
-    off.height = outH;
-    const offCtx = off.getContext("2d");
-    offCtx.imageSmoothingEnabled = true;
-    offCtx.imageSmoothingQuality = "high";
-    offCtx.drawImage(canvas, crop.x, crop.y, crop.w, crop.h, 0, 0, outW, outH);
-
-    const blob = await new Promise((resolve, reject) => {
-      off.toBlob((b) => (b ? resolve(b) : reject(new Error("이미지 변환 실패"))), "image/png");
-    });
-
-    await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
-
-    if (croppedPreviewImg) {
-      if (lastCroppedPreviewUrl) URL.revokeObjectURL(lastCroppedPreviewUrl);
-      lastCroppedPreviewUrl = URL.createObjectURL(blob);
-      croppedPreviewImg.src = lastCroppedPreviewUrl;
-    }
-  }
-
   async function ensureFontsReady() {
     // Roboto 로딩 대기(가능한 경우)
     if (document.fonts && document.fonts.ready) {
@@ -991,70 +956,7 @@
 
     if (els.generate) els.generate.addEventListener("click", doGenerate);
 
-    // 프리셋: 수익금(만원) 범위만 변경 → 생성 → 문구 표시 → 자동 클립보드 복사 + 미리보기
-    let firstPresetHintShown = false;
-    document.querySelectorAll(".preset-btn").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const pmin = btn.getAttribute("data-pmin");
-        const pmax = btn.getAttribute("data-pmax");
-        if (els.profitMin && pmin != null) els.profitMin.value = String(pmin);
-        if (els.profitMax && pmax != null) els.profitMax.value = String(pmax);
-
-        // 새로 생성(프리셋 클릭은 사용자 제스처이므로 이 안에서 클립보드 복사가 가능)
-        doGenerate();
-
-        // 프리셋 문구(연속 중복 방지)
-        const percentForPhrase = generatedItems?.[0]?.percent ?? samplePercent ?? 0;
-        let phrase = "";
-        for (let i = 0; i < 30; i++) {
-          phrase = makePresetPhrase(percentForPhrase);
-          if (phrase && phrase !== lastPresetPhrase) break;
-        }
-        lastPresetPhrase = phrase;
-        const presetId = btn.getAttribute("data-preset");
-        const caption = presetId ? document.querySelector(`.preset-caption[data-preset="${presetId}"]`) : null;
-        if (caption) {
-          caption.textContent = phrase;
-          // 프리셋 클릭만 해도 문구가 "드래그(선택)"된 상태로 보이게
-          selectElementText(caption);
-        }
-
-        // 1) 프리셋 첫 클릭 시 2초 팝업
-        if (!firstPresetHintShown) {
-          firstPresetHintShown = true;
-          showToastFor("프리셋 적용됨", 2000);
-        }
-
-        // 2) 롱/숏 또는 진입가를 최근 1시간 내에 확인/수정 안 했다면 2초 팝업
-        const now = Date.now();
-        const sideSelected = ["LONG", "SHORT"].includes(String(els.side?.value || "").toUpperCase());
-        const sideTs = getTs(LS_SIDE_TS);
-        const entryTs = getTs(LS_ENTRY_TS);
-        const sideOk = sideSelected && now - sideTs < ONE_HOUR_MS;
-        const entryOk = entryTs > 0 && now - entryTs < ONE_HOUR_MS;
-        if (!sideSelected) {
-          // 롱/숏을 아직 안 눌렀으면: 중앙 툴팁 1초
-          showCenterTip("롱/숏 확인하세요", 1000);
-        } else if (!sideOk || !entryOk) {
-          showToastFor("롱/숏·진입가 확인하세요", 2000);
-        }
-
-        try {
-          await copyCanvasToClipboardAndPreview();
-          showToast("클립보드에 복사됨");
-        } catch (e) {
-          console.error(e);
-          showToast("클립보드 복사 실패(HTTPS에서만 가능)");
-        }
-      });
-    });
-
-    // 프리셋 아래 문구 클릭 시: 드래그(선택)된 상태로만 만들기(복사는 하지 않음)
-    document.querySelectorAll(".preset-caption").forEach((cap) => {
-      cap.addEventListener("click", () => {
-        selectElementText(cap);
-      });
-    });
+    // (프리셋 UI 제거됨)
     if (els.downloadZip) els.downloadZip.addEventListener("click", downloadZip);
     if (els.reroll)
       els.reroll.addEventListener("click", () => {

@@ -73,69 +73,7 @@ canvas{
   color:var(--muted);
 }
 
-.copied-preview-wrap{
-  padding:14px 16px;
-  background:#0e1522;
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:12px;
-  display:grid;
-  gap:10px;
-}
-
-.copied-preview-title{
-  font-size:12px;
-  color:var(--muted);
-}
-
-.copied-preview-img{
-  width:100%;
-  height:auto;
-  display:block;
-  border-radius:10px;
-  border:1px solid rgba(255,255,255,.08);
-  background:#0c1220;
-}
-
-.preset-wrap{
-  padding:14px 16px;
-  background:#0e1522;
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:12px;
-  display:grid;
-  gap:10px;
-  margin-bottom: 14px;
-}
-
-.preset-title{
-  font-size:12px;
-  color:var(--muted);
-}
-
-.preset-grid{
-  display:grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap:10px;
-}
-
-.preset-btn{
-  width:100%;
-  white-space: nowrap;
-}
-
-.preset-caption{
-  min-height: 34px;
-  padding: 2px 4px;
-  font-size: 12px;
-  line-height: 1.2;
-  color: rgba(231,238,252,.85);
-  overflow: hidden;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
-  cursor: text;
-  user-select: text;
-}
+/* 프리셋 UI 및 크롭 프리뷰 UI 삭제됨 */
 
 .toast{
   position: fixed;
