@@ -64,6 +64,48 @@ canvas{
   gap:10px;
 }
 
+.generate-row{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.side-hint{
+  padding:10px 14px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.16);
+  background: rgba(12, 18, 32, .92);
+  box-shadow: 0 10px 30px rgba(0,0,0,.45);
+  font-size:28px; /* 생성 버튼(기본 14px)의 약 2배 */
+  line-height:1.05;
+  letter-spacing:-0.2px;
+  opacity:0;
+  pointer-events:none;
+  white-space: nowrap;
+}
+
+/* 보여졌다가 2초에 걸쳐 사라짐 */
+.side-hint.show{
+  opacity:1;
+}
+.side-hint.fadeout{
+  opacity:0;
+  transition: opacity 2s ease;
+}
+
+.side-hint-long{
+  font-weight:900;
+  color: #3da5ff; /* LONG: 파란색 */
+}
+.side-hint-short{
+  font-weight:900;
+  color: rgb(250,75,75); /* SHORT: 빨간색 */
+}
+.side-hint-sep{
+  font-weight:900;
+  color: rgba(231,238,252,.9);
+}
+
 .generate-wrap button{
   width: fit-content;
 }

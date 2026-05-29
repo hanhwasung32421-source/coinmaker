@@ -9,6 +9,7 @@
   const toastEl = document.getElementById("toast");
   const centerTipEl = document.getElementById("centerTip");
   // (프리셋/크롭 미리보기 UI 제거됨)
+  const sideHintEl = document.getElementById("sideHint");
 
   const els = {
     percentMin: document.getElementById("inpPercentMin"),
@@ -85,6 +86,17 @@
     showCenterTip._t = setTimeout(() => centerTipEl.classList.remove("show"), ms);
   }
   showCenterTip._t = null;
+
+  function showSideHint() {
+    if (!sideHintEl) return;
+    // 재클릭 시 애니메이션 리셋
+    sideHintEl.classList.remove("fadeout");
+    sideHintEl.classList.add("show");
+    // 다음 프레임에 fadeout 적용(transition 시작)
+    requestAnimationFrame(() => {
+      sideHintEl.classList.add("fadeout");
+    });
+  }
 
   async function copyTextWithSelection(text) {
     const t = String(text || "");
@@ -954,7 +966,11 @@
       renderAll();
     };
 
-    if (els.generate) els.generate.addEventListener("click", doGenerate);
+    if (els.generate)
+      els.generate.addEventListener("click", () => {
+        showSideHint();
+        doGenerate();
+      });
 
     // (프리셋 UI 제거됨)
     if (els.downloadZip) els.downloadZip.addEventListener("click", downloadZip);
