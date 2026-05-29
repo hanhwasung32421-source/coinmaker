@@ -2,9 +2,9 @@
 (() => {
   const CANVAS_W = 462;
   const CANVAS_H = 354;
-  const SUPABASE_URL = "https://dyfycrmltqosezmsufup.supabase.co";
+  const SUPABASE_URL = "https://axcppzioyedwfvtvmilr.supabase.co";
   const SUPABASE_ANON_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR5Znljcm1sdHFvc2V6bXN1ZnVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwMzg4MDIsImV4cCI6MjA5NTYxNDgwMn0.VpJCBdD1g8YZiaa6Zah9ZKIu3ydu_RkSgWCdEXe2QGw";
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF4Y3BwemlveWVkd2Z2dHZtaWxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwNDE0ODAsImV4cCI6MjA5NTYxNzQ4MH0.R2dcCJoyBxgW6dzUSP0j8eJX3fMzCBxynda-AKu6aaw";
 
   /** @type {HTMLCanvasElement} */
   const canvas = document.getElementById("cardCanvas");
@@ -21,6 +21,7 @@
       : null;
 
   let saveTimer = null;
+  // 초기 로드(loadSettingsFromSupabase) 중에는 저장을 막고, 최초 렌더 이후부터 저장 허용
   let isReadyForSave = false;
 
   const els = {
@@ -145,8 +146,6 @@
       document.body.removeChild(ta);
     }
 
-    // 최초 렌더 이후부터 저장 허용
-    isReadyForSave = true;
   }
 
   function selectElementText(el) {
@@ -321,10 +320,15 @@
     if (!sb) return;
     try {
       const { data, error } = await sb.from("app_settings").select("data").eq("id", "global").maybeSingle();
-      if (error) return;
+      if (error) {
+        console.error("[supabase] load failed:", error);
+        showToast("Supabase 불러오기 실패");
+        return;
+      }
       if (data && data.data) applySettings(data.data);
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("[supabase] load exception:", e);
+      showToast("Supabase 불러오기 실패");
     }
   }
 
@@ -332,9 +336,14 @@
     if (!sb) return;
     try {
       const payload = collectSettings();
-      await sb.from("app_settings").upsert({ id: "global", data: payload }, { onConflict: "id" });
-    } catch {
-      // ignore
+      const { error } = await sb.from("app_settings").upsert({ id: "global", data: payload }, { onConflict: "id" });
+      if (error) {
+        console.error("[supabase] save failed:", error);
+        showToast("Supabase 저장 실패");
+      }
+    } catch (e) {
+      console.error("[supabase] save exception:", e);
+      showToast("Supabase 저장 실패");
     }
   }
 
@@ -1290,8 +1299,16 @@
   }
 
   async function init() {
-    // 원격 설정 먼저 적용 (가능한 경우)
-    await loadSettingsFromSupabase();
+    // Supabase 연결 확인
+    if (!sb) {
+      console.error("[supabase] client not initialized. Check supabase-js script loading.");
+      showToast("Supabase 연결 실패");
+    } else {
+      // 디버깅 편의용(콘솔에서 window.sb 확인 가능)
+      window.sb = sb;
+      // 원격 설정 먼저 적용 (가능한 경우)
+      await loadSettingsFromSupabase();
+    }
 
     bind();
     bindSideUi();
@@ -1325,6 +1342,9 @@
         { once: true }
       );
     }
+
+    // 최초 렌더 이후부터 저장 허용
+    isReadyForSave = true;
   }
 
   init();
