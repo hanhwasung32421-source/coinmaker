@@ -2,6 +2,9 @@
 (() => {
   const CANVAS_W = 462;
   const CANVAS_H = 354;
+  const SUPABASE_URL = "https://dyfycrmltqosezmsufup.supabase.co";
+  const SUPABASE_ANON_KEY =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR5Znljcm1sdHFvc2V6bXN1ZnVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwMzg4MDIsImV4cCI6MjA5NTYxNDgwMn0.VpJCBdD1g8YZiaa6Zah9ZKIu3ydu_RkSgWCdEXe2QGw";
 
   /** @type {HTMLCanvasElement} */
   const canvas = document.getElementById("cardCanvas");
@@ -10,6 +13,15 @@
   const centerTipEl = document.getElementById("centerTip");
   // (프리셋/크롭 미리보기 UI 제거됨)
   const sideHintEl = document.getElementById("sideHint");
+
+  /** @type {import("@supabase/supabase-js").SupabaseClient | null} */
+  const sb =
+    window.supabase && typeof window.supabase.createClient === "function"
+      ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+      : null;
+
+  let saveTimer = null;
+  let isReadyForSave = false;
 
   const els = {
     percentMin: document.getElementById("inpPercentMin"),
@@ -28,6 +40,10 @@
     shiftLeft: document.getElementById("btnShiftLeft"),
     shiftRight: document.getElementById("btnShiftRight"),
     shiftReset: document.getElementById("btnShiftReset"),
+    bgX: document.getElementById("inpBgX"),
+    bgY: document.getElementById("inpBgY"),
+    bgApply: document.getElementById("btnBgApply"),
+    bgPosText: document.getElementById("txtBgPos"),
 
     padX: document.getElementById("inpPadX"),
     topPercentY: document.getElementById("inpTopPercentY"),
@@ -128,6 +144,9 @@
     } finally {
       document.body.removeChild(ta);
     }
+
+    // 최초 렌더 이후부터 저장 허용
+    isReadyForSave = true;
   }
 
   function selectElementText(el) {
@@ -218,6 +237,106 @@
   // 배경 이동은 입력칸 없이 버튼으로만 조절
   let bgShiftX = 0;
   let bgShiftY = 28;
+
+  function updateBgUi() {
+    if (els.bgPosText) els.bgPosText.textContent = `X: ${Math.round(bgShiftX)}, Y: ${Math.round(bgShiftY)}`;
+    if (els.bgX) els.bgX.value = String(Math.round(bgShiftX));
+    if (els.bgY) els.bgY.value = String(Math.round(bgShiftY));
+  }
+
+  function scheduleSave() {
+    if (!sb) return;
+    if (!isReadyForSave) return;
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => void saveSettingsToSupabase(), 450);
+  }
+
+  function collectSettings() {
+    return {
+      percentMin: String(els.percentMin?.value ?? ""),
+      percentMax: String(els.percentMax?.value ?? ""),
+      profitMin: String(els.profitMin?.value ?? ""),
+      profitMax: String(els.profitMax?.value ?? ""),
+      symbol: String(els.symbol?.value ?? ""),
+      side: String(els.side?.value ?? ""),
+      leverage: String(els.leverage?.value ?? ""),
+      entry: String(els.entry?.value ?? ""),
+      bgZoom: Number(els.bgZoom?.value ?? DEFAULTS.bgZoom),
+      bgShiftX: Math.round(bgShiftX),
+      bgShiftY: Math.round(bgShiftY),
+      count: Number(els.count?.value ?? DEFAULTS.count),
+      prefix: String(els.prefix?.value ?? ""),
+      textAdjust: textAdjust,
+    };
+  }
+
+  function applySettings(data) {
+    if (!data || typeof data !== "object") return;
+
+    // 입력값
+    if (els.percentMin && data.percentMin != null) els.percentMin.value = String(data.percentMin);
+    if (els.percentMax && data.percentMax != null) els.percentMax.value = String(data.percentMax);
+    if (els.profitMin && data.profitMin != null) els.profitMin.value = String(data.profitMin);
+    if (els.profitMax && data.profitMax != null) els.profitMax.value = String(data.profitMax);
+    if (els.symbol && data.symbol != null) els.symbol.value = String(data.symbol);
+    if (els.side && data.side != null) els.side.value = String(data.side);
+    if (els.leverage && data.leverage != null) els.leverage.value = String(data.leverage);
+    if (els.entry && data.entry != null) els.entry.value = String(data.entry);
+    if (els.count && data.count != null) els.count.value = String(Number(data.count) || DEFAULTS.count);
+    if (els.prefix && data.prefix != null) els.prefix.value = String(data.prefix);
+
+    // 배경
+    if (els.bgZoom && data.bgZoom != null) {
+      const z = Number(data.bgZoom);
+      els.bgZoom.value = Number.isFinite(z) ? z.toFixed(3) : String(DEFAULTS.bgZoom.toFixed(3));
+    }
+    if (data.bgShiftX != null) bgShiftX = Math.round(Number(data.bgShiftX) || 0);
+    if (data.bgShiftY != null) bgShiftY = Math.round(Number(data.bgShiftY) || 0);
+    updateBgUi();
+
+    // 텍스트 조정
+    if (data.textAdjust && typeof data.textAdjust === "object") {
+      Object.keys(textAdjust).forEach((k) => delete textAdjust[k]);
+      Object.entries(data.textAdjust).forEach(([k, v]) => {
+        if (!v || typeof v !== "object") return;
+        textAdjust[k] = {
+          dx: Number(v.dx) || 0,
+          dy: Number(v.dy) || 0,
+          size: v.size == null ? null : Number(v.size),
+          bold: v.bold == null ? null : !!v.bold,
+        };
+      });
+    }
+
+    // anchor는 항상 재계산하도록 초기화
+    Object.keys(baseAnchor).forEach((k) => delete baseAnchor[k]);
+
+    // side UI 버튼 상태 동기화
+    const curSide = String(els.side?.value || "").toUpperCase();
+    if (sideUi.longBtn) sideUi.longBtn.classList.toggle("active", curSide === "LONG");
+    if (sideUi.shortBtn) sideUi.shortBtn.classList.toggle("active", curSide === "SHORT");
+  }
+
+  async function loadSettingsFromSupabase() {
+    if (!sb) return;
+    try {
+      const { data, error } = await sb.from("app_settings").select("data").eq("id", "global").maybeSingle();
+      if (error) return;
+      if (data && data.data) applySettings(data.data);
+    } catch {
+      // ignore
+    }
+  }
+
+  async function saveSettingsToSupabase() {
+    if (!sb) return;
+    try {
+      const payload = collectSettings();
+      await sb.from("app_settings").upsert({ id: "global", data: payload }, { onConflict: "id" });
+    } catch {
+      // ignore
+    }
+  }
 
   // ---- 스타일 (사용자 제공 값 반영) ----
   const COLORS = {
@@ -939,7 +1058,10 @@
   }
 
   function bind() {
-    const reRender = () => renderAll();
+    const reRender = () => {
+      renderAll();
+      scheduleSave();
+    };
     Object.values(els).forEach((el) => {
       if (!el) return;
       if (el.tagName === "INPUT" || el.tagName === "SELECT") {
@@ -953,6 +1075,16 @@
       const mark = () => setTs(LS_ENTRY_TS);
       els.entry.addEventListener("input", mark);
       els.entry.addEventListener("change", mark);
+    }
+
+    // 줌 입력은 3자리 소수로 정리
+    if (els.bgZoom) {
+      const fmt = () => {
+        const v = Number(els.bgZoom.value);
+        if (Number.isFinite(v)) els.bgZoom.value = v.toFixed(3);
+      };
+      els.bgZoom.addEventListener("change", fmt);
+      els.bgZoom.addEventListener("blur", fmt);
     }
 
     const doGenerate = () => {
@@ -1040,7 +1172,9 @@
     const bump = (key, delta) => {
       if (key === "x") bgShiftX = Math.round(bgShiftX) + delta;
       else bgShiftY = Math.round(bgShiftY) + delta;
+      updateBgUi();
       renderAll();
+      scheduleSave();
     };
     if (els.shiftUp) els.shiftUp.addEventListener("click", () => bump("y", -1));
     if (els.shiftDown) els.shiftDown.addEventListener("click", () => bump("y", +1));
@@ -1050,7 +1184,29 @@
       els.shiftReset.addEventListener("click", () => {
         bgShiftX = 0;
         bgShiftY = 28;
+        updateBgUi();
         renderAll();
+        scheduleSave();
+      });
+
+    // 좌표 입력으로 이동
+    const applyBgPos = () => {
+      const x = Number(els.bgX?.value);
+      const y = Number(els.bgY?.value);
+      bgShiftX = Number.isFinite(x) ? Math.round(x) : Math.round(bgShiftX);
+      bgShiftY = Number.isFinite(y) ? Math.round(y) : Math.round(bgShiftY);
+      updateBgUi();
+      renderAll();
+      scheduleSave();
+    };
+    if (els.bgApply) els.bgApply.addEventListener("click", applyBgPos);
+    if (els.bgX)
+      els.bgX.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") applyBgPos();
+      });
+    if (els.bgY)
+      els.bgY.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") applyBgPos();
       });
 
     // 텍스트 항목별 1px 이동 버튼
@@ -1064,6 +1220,7 @@
         adj.dx += dx;
         adj.dy += dy;
         renderAll();
+        scheduleSave();
       };
 
       pad.querySelectorAll(".text-move-btn").forEach((btn) => {
@@ -1082,6 +1239,7 @@
           selectedTextId = id;
           delete textAdjust[id];
           renderAll();
+          scheduleSave();
         });
 
       // 글씨 크기 +/- (항목별)
@@ -1097,6 +1255,7 @@
           const cur = adj.size == null ? baseSize : adj.size;
           adj.size = Math.max(1, Math.round(cur + delta));
           renderAll();
+          scheduleSave();
         });
       });
 
@@ -1114,6 +1273,7 @@
           adj.bold = adj.bold === true ? false : true;
           sync();
           renderAll();
+          scheduleSave();
         });
       }
     });
@@ -1130,10 +1290,14 @@
   }
 
   async function init() {
+    // 원격 설정 먼저 적용 (가능한 경우)
+    await loadSettingsFromSupabase();
+
     bind();
     bindSideUi();
-    // 최초 진입: 무조건 LONG/SHORT부터 선택 → 기준진입가 입력까지 완료해야 넘어감
-    showModalStep("side");
+
+    // 배경 좌표 UI 초기 동기화
+    updateBgUi();
     await ensureFontsReady();
 
     if (bgImg.complete) {
