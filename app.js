@@ -539,8 +539,16 @@
     return Math.round(n * 100000); // 1e5
   }
 
+  function trimTrailingZerosDecimal(text) {
+    const s = String(text ?? "").trim();
+    if (!s.includes(".")) return s;
+    // 소수점 뒤의 불필요한 0 제거 (예: 0.10050 -> 0.1005, 0.10000 -> 0.1)
+    const t = s.replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
+    return t;
+  }
+
   function entryIntToText(intVal) {
-    return (intVal / 100000).toFixed(5);
+    return trimTrailingZerosDecimal((intVal / 100000).toFixed(5));
   }
 
   function randomEntryFromBase(entryBaseText) {
