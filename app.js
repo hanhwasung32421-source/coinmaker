@@ -586,7 +586,7 @@
     const isShort = String(side || "").toUpperCase() === "SHORT";
     const raw = isShort ? e * (1 - p) : e * (1 + p);
     const rounded = roundTo(raw, 5);
-    return rounded.toFixed(5);
+    return trimTrailingZerosDecimal(rounded.toFixed(5));
   }
 
   function getBgZoom() {
