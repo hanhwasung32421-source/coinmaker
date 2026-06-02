@@ -971,6 +971,7 @@
     if (sideUi.longBtn) sideUi.longBtn.classList.toggle("active", value === "LONG");
     if (sideUi.shortBtn) sideUi.shortBtn.classList.toggle("active", value === "SHORT");
     renderAll();
+    scheduleSave();
   }
 
   function bindSideUi() {
