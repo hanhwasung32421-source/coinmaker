@@ -555,7 +555,8 @@
     const baseInt = parseEntryToInt(entryBaseText);
     if (baseInt == null) return String(entryBaseText || "").trim();
     // 마지막 자리(소수 5번째 자리) 기준 +-2
-    const deltas = [-2, -1, 1, 2];
+    // 사용자가 입력한 '본 가격(0)'도 포함해서 5개 케이스가 나오게
+    const deltas = [-2, -1, 0, 1, 2];
     const d = deltas[Math.floor(Math.random() * deltas.length)];
     const next = Math.max(0, baseInt + d);
     return entryIntToText(next);
