@@ -76,9 +76,8 @@ try {
       Write-Log "커밋/푸쉬 실행: $msg"
 
       # deploy.bat이 스테이징/커밋/푸쉬를 처리
-      # 메시지는 배치파일 인자로 전달(따옴표 포함)
-      $cmd = "call `"$deployBat`" `"$msg`""
-      & cmd /c $cmd
+      # PowerShell에서 .bat 호출은 자동으로 cmd를 통해 실행됩니다.
+      & $deployBat $msg
       if ($LASTEXITCODE -ne 0) { throw "deploy.bat 실행 실패 (exit=$LASTEXITCODE)" }
 
       Write-Log "완료"
@@ -138,4 +137,3 @@ try {
 finally {
   Pop-Location
 }
-
