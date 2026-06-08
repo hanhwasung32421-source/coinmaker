@@ -21,8 +21,17 @@ if errorlevel 1 (
   git remote set-url origin "%REMOTE_URL%"
 )
 
-REM Ensure main branch
-git branch -M main
+REM Current branch (fail if detached HEAD)
+set "BRANCH="
+for /f %%B in ('git rev-parse --abbrev-ref HEAD') do set "BRANCH=%%B"
+if /i "%BRANCH%"=="HEAD" (
+  echo [ERROR] Detached HEAD state. Please checkout a branch and retry.
+  exit /b 1
+)
+
+REM Commit message (optional)
+set "COMMIT_MSG=%~1"
+if "%COMMIT_MSG%"=="" set "COMMIT_MSG=deploy"
 
 REM Stage everything
 git add -A
@@ -32,10 +41,10 @@ set "HAS_CHANGES="
 for /f %%A in ('git status --porcelain') do set "HAS_CHANGES=1"
 
 if defined HAS_CHANGES (
-  git commit -m "deploy"
+  git commit -m "%COMMIT_MSG%"
 ) else (
   echo [INFO] No changes to commit. (push only)
 )
 
 REM Push
-git push -u origin main
+git push -u origin "%BRANCH%"
