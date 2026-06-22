@@ -352,7 +352,8 @@
   const COLORS = {
     accent: "rgb(73, 245, 184)", // +19.75%, +10,229,614 WON 등
     red: "rgb(250, 79, 79)", // SHORT
-    label: "rgb(176, 169, 159)", // 코인/레버리지/진입가격/종료가격 라벨
+    // 원본 캡쳐에서 라벨(예: "코인")이 더 또렷하게 보이도록 약간 더 밝은 톤 사용
+    label: "rgb(186, 180, 171)", // 코인/레버리지/진입가격/종료가격 라벨
     value: "rgb(232, 230, 227)", // 값(100x, 0.08608 등)
   };
 
@@ -902,7 +903,8 @@
         x: POS2.padX,
         y: valueY,
         font: fontForTextId(valueId, baseSizes),
-        fill: row.key === "stock" ? COLORS.accent : COLORS.value,
+        // 원본 캡쳐: 코인 심볼(DOGE/USDT)은 흰색 계열, LONG/SHORT만 컬러 처리
+        fill: COLORS.value,
         recordHitbox: recordHitboxes,
       });
 
