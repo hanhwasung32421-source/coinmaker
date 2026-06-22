@@ -1,15 +1,40 @@
+/* 로컬 폰트(폴더 내 파일)로 고정 로딩: 첨부 캡쳐 스타일과 동일하게 맞추기 위함 */
+@font-face{
+  font-family:"Noto-Sans-KR-Regular";
+  src:url("./Noto_Sans_KR/static/NotoSansKR-Regular.ttf") format("truetype");
+  font-style:normal;
+  font-weight:400;
+  font-display:swap;
+}
+@font-face{
+  font-family:"Noto-Sans-KR-Medium";
+  src:url("./Noto_Sans_KR/static/NotoSansKR-Medium.ttf") format("truetype");
+  font-style:normal;
+  font-weight:500;
+  font-display:swap;
+}
+@font-face{
+  /* 캡쳐 기준 굵기(600)에 맞춰 Bold 파일을 600으로 매핑 */
+  font-family:"Noto-Sans-KR-Bold";
+  src:url("./Noto_Sans_KR/static/NotoSansKR-Bold.ttf") format("truetype");
+  font-style:normal;
+  font-weight:600;
+  font-display:swap;
+}
+
 :root{
-  --bg:#0b0f17;
-  --panel:#111826;
-  --text:#e7eefc;
-  --muted:rgba(231,238,252,.65);
-  --accent:#0abf7f;
+  --bg:rgb(11, 22, 25);
+  --panel:rgba(17, 24, 38, .92);
+  --text:rgb(232, 230, 227);
+  --muted:rgb(176, 169, 159);
+  --accent:rgb(73, 245, 184);
+  --danger:rgb(250, 79, 79);
 }
 
 *{box-sizing:border-box}
 body{
   margin:0;
-  font-family:Roboto, system-ui, -apple-system, Segoe UI, Arial, sans-serif;
+  font-family:"Noto-Sans-KR-Regular", system-ui, -apple-system, Segoe UI, Arial, sans-serif;
   background:var(--bg);
   color:var(--text);
 }
@@ -95,11 +120,11 @@ canvas{
 
 .side-hint-long{
   font-weight:900;
-  color: #3da5ff; /* LONG: 파란색 */
+  color: var(--accent);
 }
 .side-hint-short{
   font-weight:900;
-  color: rgb(250,75,75); /* SHORT: 빨간색 */
+  color: var(--danger);
 }
 .side-hint-sep{
   font-weight:900;
@@ -124,7 +149,7 @@ canvas{
   padding: 10px 12px;
   border-radius: 10px;
   border: 1px solid rgba(255,255,255,.12);
-  background: rgba(10,191,127,.16);
+  background: rgba(73, 245, 184, .16);
   color: #d8ffe7;
   font-size: 13px;
   opacity: 0;
@@ -264,8 +289,8 @@ label.mini{
 }
 
 .text-bold-btn.active{
-  background: rgba(10,191,127,.16);
-  border-color: rgba(10,191,127,.45);
+  background: rgba(73, 245, 184, .16);
+  border-color: rgba(73, 245, 184, .45);
 }
 
 .controls{
@@ -321,8 +346,8 @@ label input, label select{
 }
 
 .side-btn.active{
-  background: rgba(10,191,127,.18);
-  border-color: rgba(10,191,127,.55);
+  background: rgba(73, 245, 184, .18);
+  border-color: rgba(73, 245, 184, .55);
 }
 
 .modal-overlay{
@@ -454,8 +479,8 @@ input:disabled{
 }
 
 input:focus, select:focus{
-  border-color:rgba(10,191,127,.7);
-  box-shadow:0 0 0 3px rgba(10,191,127,.12);
+  border-color: rgba(73, 245, 184, .70);
+  box-shadow: 0 0 0 3px rgba(73, 245, 184, .12);
 }
 
 .actions{
@@ -476,8 +501,8 @@ button{
 }
 
 button.primary{
-  background: rgba(10,191,127,.16);
-  border-color: rgba(10,191,127,.45);
+  background: rgba(73, 245, 184, .16);
+  border-color: rgba(73, 245, 184, .45);
 }
 
 button.secondary{

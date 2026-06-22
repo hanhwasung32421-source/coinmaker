@@ -347,23 +347,28 @@
     }
   }
 
-  // ---- 스타일 (사용자 제공 값 반영) ----
+  // ---- 스타일 (첨부 캡쳐 기준으로 고정) ----
+  // 색상: 첨부 캡쳐에 맞춤
   const COLORS = {
-    green: "rgb(10,191,127)",
-    red: "rgb(250,75,75)",
-    // (스크린샷 기준) label은 연한 흰색, value는 거의 흰색
-    label: "rgb(166,166,166)",
-    value: "rgb(255,255,255)",
+    accent: "rgb(73, 245, 184)", // +19.75%, +10,229,614 WON 등
+    red: "rgb(250, 79, 79)", // SHORT
+    label: "rgb(176, 169, 159)", // 코인/레버리지/진입가격/종료가격 라벨
+    value: "rgb(232, 230, 227)", // 값(100x, 0.08608 등)
   };
 
-  // 폰트: Roboto
-  const FONT = {
-    percentNum: "500 32px Roboto",
-    percentSign: "500 34px Roboto",
-    profit: "500 20px Roboto",
-    label: "400 16px Roboto",
-    value: "700 18px Roboto",
-    side: "700 18px Roboto",
+  /**
+   * 폰트(사용자 제공):
+   * - PostScript 이름: Noto-Sans-KR-Bold
+   * - PostScript 이름: Noto-Sans-KR-Medium
+   * - (일반) Noto-Sans-KR-Regular
+   *
+   * style.css에서 @font-face로 위 이름을 "font-family"로 등록해두었고,
+   * 캔버스에서는 동일한 이름을 그대로 사용합니다.
+   */
+  const FONT_FAMILY = {
+    regular: "Noto-Sans-KR-Regular",
+    medium: "Noto-Sans-KR-Medium",
+    bold: "Noto-Sans-KR-Bold",
   };
 
   // 좌표 (462x354 캔버스 기준). (제공된 .dg-body 카드 기준)
@@ -385,24 +390,6 @@
     if (!inputEl) return fallback;
     const v = Number(inputEl.value);
     return Number.isFinite(v) ? v : fallback;
-  }
-
-  function getFont() {
-    // 사용자 입력이 없으면 기존 FONT 기반으로 fallback
-    const sPercentNum = Math.max(1, Math.round(numFrom(els.sizePercentNum, 32)));
-    const sPercentSign = Math.max(1, Math.round(numFrom(els.sizePercentSign, 34)));
-    const sProfit = Math.max(1, Math.round(numFrom(els.sizeProfit, 20)));
-    const sLabel = Math.max(1, Math.round(numFrom(els.sizeLabel, 16)));
-    const sValue = Math.max(1, Math.round(numFrom(els.sizeValue, 18)));
-    const sSide = Math.max(1, Math.round(numFrom(els.sizeSide, 18)));
-    return {
-      percentNum: `500 ${sPercentNum}px Roboto`,
-      percentSign: `500 ${sPercentSign}px Roboto`,
-      profit: `500 ${sProfit}px Roboto`,
-      label: `400 ${sLabel}px Roboto`,
-      value: `700 ${sValue}px Roboto`,
-      side: `700 ${sSide}px Roboto`,
-    };
   }
 
   function getPos() {
@@ -431,8 +418,10 @@
     };
   }
 
+  const BG_PRIMARY = "./bg.jpg";
+  const BG_FALLBACK = "./calcu/bg.png";
   const bgImg = new Image();
-  bgImg.src = "./calcu/bg.png";
+  bgImg.src = BG_PRIMARY;
 
   // 미리보기에서는 범위가 바뀌지 않으면 같은 랜덤 값을 유지
   let samplePercent = null; // number
@@ -742,26 +731,34 @@
     return m ? Number(m[1]) : fallback;
   }
 
+  function getBaseTextStyle(id, baseSizes) {
+    // 첨부 캡쳐 기준
+    if (id === "percentNum") return { family: FONT_FAMILY.medium, weight: 500, size: baseSizes.percentNum };
+    if (id === "percentSign") return { family: FONT_FAMILY.bold, weight: 600, size: baseSizes.percentSign };
+    if (id === "profit") return { family: FONT_FAMILY.regular, weight: 400, size: baseSizes.profit };
+    if (id === "side") return { family: FONT_FAMILY.bold, weight: 600, size: baseSizes.side };
+    if (id === "stockValue") return { family: FONT_FAMILY.bold, weight: 600, size: baseSizes.stockValue };
+    if (id.endsWith("Label")) return { family: FONT_FAMILY.regular, weight: 400, size: baseSizes.label };
+    // leverage/entry/exit 값 등
+    return { family: FONT_FAMILY.bold, weight: 600, size: baseSizes.value };
+  }
+
   function fontForTextId(id, baseSizes) {
-    // baseSizes: {percentNum, percentSign, profit, label, value, side}
     const adj = getOrInitAdjust(id);
-    const baseW = (() => {
-      if (id === "profit" || id === "percentNum" || id === "percentSign") return 500;
-      if (id.endsWith("Label")) return 400;
-      // values + side
-      return 700;
-    })();
-    const w = adj.bold === true ? 700 : adj.bold === false ? baseW : baseW;
-    const base = (() => {
-      if (id === "percentNum") return baseSizes.percentNum;
-      if (id === "percentSign") return baseSizes.percentSign;
-      if (id === "profit") return baseSizes.profit;
-      if (id.endsWith("Label")) return baseSizes.label;
-      if (id === "side") return baseSizes.side;
-      return baseSizes.value;
-    })();
-    const size = adj.size == null ? base : adj.size;
-    return `${w} ${size}px Roboto`;
+    const base = getBaseTextStyle(id, baseSizes);
+
+    // UI에서 볼드 토글을 쓰는 경우를 반영 (기본과 다르게 강제)
+    const forced =
+      adj.bold === true
+        ? { family: FONT_FAMILY.bold, weight: 600 }
+        : adj.bold === false
+          ? { family: FONT_FAMILY.regular, weight: 400 }
+          : null;
+
+    const size = adj.size == null ? base.size : adj.size;
+    const family = forced?.family ?? base.family;
+    const weight = forced?.weight ?? base.weight;
+    return `${weight} ${size}px "${family}"`;
   }
 
   function drawTextTo(targetCtx, { id, name, text, x, y, font, fill, recordHitbox }) {
@@ -812,7 +809,7 @@
 
   function getBaseSizes() {
     // 기본 글자 크기는 고정 (UI에서 항목별 +/- 로 조절)
-    return { percentNum: 32, percentSign: 34, profit: 20, label: 16, value: 18, side: 18 };
+    return { percentNum: 32, percentSign: 34, profit: 20, label: 16, stockValue: 20, value: 18, side: 18 };
   }
 
   function drawCardTo(targetCtx, percentValue, profitValue, { recordHitboxes = false, entryOverride } = {}) {
@@ -840,7 +837,7 @@
       x: x0,
       y: y0,
       font: fontForTextId("percentNum", baseSizes),
-      fill: COLORS.green,
+      fill: COLORS.accent,
       recordHitbox: recordHitboxes,
     });
     if (pSign) {
@@ -854,7 +851,7 @@
         x: baseAnchor.percentSign.x,
         y: baseAnchor.percentSign.y,
         font: fontForTextId("percentSign", baseSizes),
-        fill: COLORS.green,
+        fill: COLORS.accent,
         recordHitbox: recordHitboxes,
       });
     }
@@ -867,7 +864,7 @@
       x: POS2.padX,
       y: POS2.topProfitY,
       font: fontForTextId("profit", baseSizes),
-      fill: COLORS.green,
+      fill: COLORS.accent,
       recordHitbox: recordHitboxes,
     });
 
@@ -905,7 +902,7 @@
         x: POS2.padX,
         y: valueY,
         font: fontForTextId(valueId, baseSizes),
-        fill: COLORS.value,
+        fill: row.key === "stock" ? COLORS.accent : COLORS.value,
         recordHitbox: recordHitboxes,
       });
 
@@ -921,7 +918,7 @@
           x: baseAnchor.side.x,
           y: baseAnchor.side.y,
           font: fontForTextId("side", baseSizes),
-          fill: String(row.extra).toUpperCase() === "SHORT" ? COLORS.red : COLORS.green,
+          fill: String(row.extra).toUpperCase() === "SHORT" ? COLORS.red : COLORS.accent,
           recordHitbox: recordHitboxes,
         });
       }
@@ -1051,13 +1048,18 @@
   }
 
   async function ensureFontsReady() {
-    // Roboto 로딩 대기(가능한 경우)
-    if (document.fonts && document.fonts.ready) {
-      try {
-        await document.fonts.ready;
-      } catch {
-        // ignore
-      }
+    // 폰트 로딩 대기(가능한 경우) + 실제 사용 폰트 프리로드
+    if (!document.fonts) return;
+    try {
+      // load()로 명시적으로 로드해두면 캔버스 렌더링이 안정적입니다.
+      await Promise.all([
+        document.fonts.load(`400 16px "${FONT_FAMILY.regular}"`),
+        document.fonts.load(`500 32px "${FONT_FAMILY.medium}"`),
+        document.fonts.load(`600 34px "${FONT_FAMILY.bold}"`),
+      ]);
+      await document.fonts.ready;
+    } catch {
+      // ignore
     }
   }
 
@@ -1392,12 +1394,17 @@
       bgImg.addEventListener(
         "error",
         () => {
+          // bg.jpg 로드 실패 시 bg.png로 자동 폴백
+          if (String(bgImg.src || "").includes("bg.jpg")) {
+            bgImg.src = BG_FALLBACK;
+            return;
+          }
           ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
           ctx.fillStyle = "#000";
           ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
           ctx.fillStyle = "#fff";
-          ctx.font = "14px Roboto, Arial";
-          ctx.fillText("배경 이미지 로드 실패: ./calcu/bg.png", 12, 24);
+          ctx.font = `400 14px "${FONT_FAMILY.regular}", Arial`;
+          ctx.fillText(`배경 이미지 로드 실패: ${BG_PRIMARY} / ${BG_FALLBACK}`, 12, 24);
         },
         { once: true }
       );
