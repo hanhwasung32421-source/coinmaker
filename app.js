@@ -2,7 +2,7 @@
 (() => {
   // 빌드 버전(로컬에서 index.html을 바로 열어도 표시되도록 코드에 내장)
   // 수정할 때마다 값을 갱신합니다. 포맷: yyMMddHHmmss
-  const BUILD_VERSION = "260623175654";
+  const BUILD_VERSION = "260623175901";
 
   const SUPABASE_URL = "https://dyfycrmltqosezmsufup.supabase.co";
   const SUPABASE_ANON_KEY =
@@ -905,6 +905,7 @@
     });
     previewIndex = generatedItems.length > 0 ? 0 : -1;
     renderAll();
+    triggerWarningBlink();
   }
 
   function bindPhraseUi() {
@@ -1096,6 +1097,14 @@
     });
   }
 
+  function triggerWarningBlink() {
+    const warning = document.getElementById("sideWarning");
+    if (!warning) return;
+    warning.classList.remove("blink-active");
+    void warning.offsetWidth; // Force reflow
+    warning.classList.add("blink-active");
+  }
+
   async function init() {
     bindPhraseUi();
     bind();
@@ -1126,6 +1135,7 @@
     if (location.protocol === "file:") {
       showToastFor("권장: 로컬 서버로 열기(파일로 열면 캡처/복사 제한 가능)", 3500);
     }
+    triggerWarningBlink();
   }
 
   init();
