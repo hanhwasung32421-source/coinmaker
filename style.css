@@ -218,15 +218,12 @@ button.secondary{ background:#0c1220; }
   50% { opacity: 0; }
 }
 .side-warning {
-  display: none;
+  display: block;
   font-size: 24px;
   font-weight: 800;
   text-align: center;
   margin-top: 10px;
   margin-bottom: 5px;
-}
-.side-warning.blink-active {
-  display: block;
   animation: blink 0.8s ease-in-out infinite;
 }
 .warning-long {
