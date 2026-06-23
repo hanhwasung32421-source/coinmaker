@@ -78,6 +78,26 @@
     shortBtn: document.getElementById("btnSideShort"),
   };
 
+  const LAYOUT_INPUT_KEYS = [
+    "padX",
+    "topPercentY",
+    "topProfitY",
+    "percentSignDy",
+    "sectionStartY",
+    "rowGap",
+    "labelToValueGap",
+    "sideDx",
+    "sideDy",
+    "r1LabelDy",
+    "r1ValueDy",
+    "r2LabelDy",
+    "r2ValueDy",
+    "r3LabelDy",
+    "r3ValueDy",
+    "r4LabelDy",
+    "r4ValueDy",
+  ];
+
   function showToast(message) {
     if (!toastEl) return;
     toastEl.textContent = message;
@@ -250,6 +270,19 @@
     saveTimer = setTimeout(() => void saveSettingsToSupabase(), 450);
   }
 
+  function collectLayoutSettings() {
+    return Object.fromEntries(
+      LAYOUT_INPUT_KEYS.map((key) => [key, String(els[key]?.value ?? "")])
+    );
+  }
+
+  function applyLayoutSettings(data) {
+    if (!data || typeof data !== "object") return;
+    LAYOUT_INPUT_KEYS.forEach((key) => {
+      if (els[key] && data[key] != null) els[key].value = String(data[key]);
+    });
+  }
+
   function collectSettings() {
     return {
       percentMin: String(els.percentMin?.value ?? ""),
@@ -265,6 +298,7 @@
       bgShiftY: Math.round(bgShiftY),
       count: Number(els.count?.value ?? DEFAULTS.count),
       prefix: String(els.prefix?.value ?? ""),
+      layoutAdjust: collectLayoutSettings(),
       textAdjust: textAdjust,
     };
   }
@@ -293,6 +327,11 @@
     if (data.bgShiftY != null) bgShiftY = Math.round(Number(data.bgShiftY) || 0);
     updateBgUi();
 
+    // 전체 레이아웃 좌표
+    if (data.layoutAdjust && typeof data.layoutAdjust === "object") {
+      applyLayoutSettings(data.layoutAdjust);
+    }
+
     // 텍스트 조정
     if (data.textAdjust && typeof data.textAdjust === "object") {
       Object.keys(textAdjust).forEach((k) => delete textAdjust[k]);
@@ -314,6 +353,7 @@
     const curSide = String(els.side?.value || "").toUpperCase();
     if (sideUi.longBtn) sideUi.longBtn.classList.toggle("active", curSide === "LONG");
     if (sideUi.shortBtn) sideUi.shortBtn.classList.toggle("active", curSide === "SHORT");
+    syncAllTextControlInputs();
   }
 
   async function loadSettingsFromSupabase() {
@@ -725,6 +765,84 @@
   function getOrInitAdjust(id) {
     if (!textAdjust[id]) textAdjust[id] = { dx: 0, dy: 0, size: null, bold: null };
     return textAdjust[id];
+  }
+
+  function syncSingleTextControlInput(id) {
+    const pad = document.querySelector(`.text-move-pad[data-text-id="${id}"]`);
+    if (!pad) return;
+
+    const adj = getOrInitAdjust(id);
+    const base = getBaseTextStyle(id, getBaseSizes());
+
+    const xInput = pad.querySelector(".text-direct-x");
+    const yInput = pad.querySelector(".text-direct-y");
+    const sizeInput = pad.querySelector(".text-direct-size");
+    if (xInput) xInput.value = String(Number(adj.dx) || 0);
+    if (yInput) yInput.value = String(Number(adj.dy) || 0);
+    if (sizeInput) sizeInput.value = String(adj.size == null ? base.size : Number(adj.size) || base.size);
+  }
+
+  function syncAllTextControlInputs() {
+    document.querySelectorAll(".text-move-pad[data-text-id]").forEach((pad) => {
+      const id = pad.getAttribute("data-text-id");
+      if (!id) return;
+      syncSingleTextControlInput(id);
+    });
+  }
+
+  function ensureTextControlInputs() {
+    document.querySelectorAll(".text-move-pad[data-text-id]").forEach((pad) => {
+      if (pad.querySelector(".text-direct-inputs")) return;
+
+      const id = pad.getAttribute("data-text-id");
+      if (!id) return;
+
+      const wrap = document.createElement("div");
+      wrap.className = "text-direct-inputs";
+      wrap.innerHTML = `
+        <label>X<input class="text-direct-x" type="number" step="1" /></label>
+        <label>Y<input class="text-direct-y" type="number" step="1" /></label>
+        <label>글씨<input class="text-direct-size" type="number" step="1" min="1" /></label>
+      `;
+      pad.appendChild(wrap);
+
+      const xInput = wrap.querySelector(".text-direct-x");
+      const yInput = wrap.querySelector(".text-direct-y");
+      const sizeInput = wrap.querySelector(".text-direct-size");
+
+      if (xInput) {
+        xInput.addEventListener("input", () => {
+          const adj = getOrInitAdjust(id);
+          adj.dx = Number(xInput.value) || 0;
+          renderAll();
+          scheduleSave();
+        });
+      }
+
+      if (yInput) {
+        yInput.addEventListener("input", () => {
+          const adj = getOrInitAdjust(id);
+          adj.dy = Number(yInput.value) || 0;
+          renderAll();
+          scheduleSave();
+        });
+      }
+
+      if (sizeInput) {
+        sizeInput.addEventListener("input", () => {
+          const adj = getOrInitAdjust(id);
+          const base = getBaseTextStyle(id, getBaseSizes());
+          const next = Number(sizeInput.value);
+          adj.size = Number.isFinite(next) && next > 0 ? Math.round(next) : base.size;
+          renderAll();
+          scheduleSave();
+        });
+      }
+    });
+
+    ensureTextControlInputs();
+
+    syncAllTextControlInputs();
   }
 
   function parseFontSizePx(fontStr, fallback = 16) {
@@ -1239,7 +1357,11 @@
       sampleEntry = null;
       lastEntryBase = null;
       rerollIfNeeded(true);
+      if (sideUi.longBtn) sideUi.longBtn.classList.toggle("active", true);
+      if (sideUi.shortBtn) sideUi.shortBtn.classList.toggle("active", false);
+      syncAllTextControlInputs();
       renderAll();
+      scheduleSave();
       });
 
     const bump = (key, delta) => {
@@ -1292,6 +1414,7 @@
         const adj = getOrInitAdjust(id);
         adj.dx += dx;
         adj.dy += dy;
+        syncSingleTextControlInput(id);
         renderAll();
         scheduleSave();
       };
@@ -1311,6 +1434,7 @@
         resetBtn.addEventListener("click", () => {
           selectedTextId = id;
           delete textAdjust[id];
+          syncSingleTextControlInput(id);
           renderAll();
           scheduleSave();
         });
@@ -1327,6 +1451,7 @@
           const adj = getOrInitAdjust(id);
           const cur = adj.size == null ? baseSize : adj.size;
           adj.size = Math.max(1, Math.round(cur + delta));
+          syncSingleTextControlInput(id);
           renderAll();
           scheduleSave();
         });
@@ -1345,6 +1470,7 @@
           const adj = getOrInitAdjust(id);
           adj.bold = adj.bold === true ? false : true;
           sync();
+          syncSingleTextControlInput(id);
           renderAll();
           scheduleSave();
         });
@@ -1376,6 +1502,10 @@
 
     bind();
     bindSideUi();
+    setSide(String(els.side?.value || DEFAULTS.side).toUpperCase() === "SHORT" ? "SHORT" : "LONG", {
+      closeModal: false,
+    });
+    syncAllTextControlInputs();
 
     // 배경 좌표 UI 초기 동기화
     updateBgUi();

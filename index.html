@@ -62,7 +62,7 @@
             <div class="side-toggle" role="group" aria-label="포지션 선택">
               <button id="btnSideLong" class="secondary side-btn" type="button">LONG</button>
               <button id="btnSideShort" class="secondary side-btn" type="button">SHORT</button>
-              <input id="inpSide" type="hidden" value="" />
+              <input id="inpSide" type="hidden" value="LONG" />
             </div>
           </label>
 
@@ -120,8 +120,32 @@
           </div>
 
           <details class="tuning span-3" open>
+            <summary>전체 좌표 수치 입력</summary>
+            <div class="pick-hint">모든 기본 위치를 직접 숫자로 입력할 수 있습니다. 변경값은 저장됩니다.</div>
+            <div class="numeric-grid">
+              <label>왼쪽 여백 X<input id="inpPadX" type="number" step="1" value="18" /></label>
+              <label>수익률 Y<input id="inpTopPercentY" type="number" step="1" value="44" /></label>
+              <label>수익금 Y<input id="inpTopProfitY" type="number" step="1" value="76" /></label>
+              <label>% 상대 Y<input id="inpPercentSignDy" type="number" step="1" value="3" /></label>
+              <label>섹션 시작 Y<input id="inpSectionStartY" type="number" step="1" value="118" /></label>
+              <label>행 간격<input id="inpRowGap" type="number" step="1" value="58" /></label>
+              <label>라벨-값 간격<input id="inpLabelToValueGap" type="number" step="1" value="24" /></label>
+              <label>LONG/SHORT X<input id="inpSideDx" type="number" step="1" value="6" /></label>
+              <label>LONG/SHORT Y<input id="inpSideDy" type="number" step="1" value="0" /></label>
+              <label>1행 라벨 Y<input id="inpR1LabelDy" type="number" step="1" value="0" /></label>
+              <label>1행 값 Y<input id="inpR1ValueDy" type="number" step="1" value="0" /></label>
+              <label>2행 라벨 Y<input id="inpR2LabelDy" type="number" step="1" value="0" /></label>
+              <label>2행 값 Y<input id="inpR2ValueDy" type="number" step="1" value="0" /></label>
+              <label>3행 라벨 Y<input id="inpR3LabelDy" type="number" step="1" value="0" /></label>
+              <label>3행 값 Y<input id="inpR3ValueDy" type="number" step="1" value="0" /></label>
+              <label>4행 라벨 Y<input id="inpR4LabelDy" type="number" step="1" value="0" /></label>
+              <label>4행 값 Y<input id="inpR4ValueDy" type="number" step="1" value="0" /></label>
+            </div>
+          </details>
+
+          <details class="tuning span-3" open>
             <summary>텍스트 미세조정(항목별 1px 이동)</summary>
-            <div class="pick-hint">각 항목별로 “위/왼쪽/원점/오른쪽/아래” 버튼으로 1px씩 이동할 수 있습니다.</div>
+            <div class="pick-hint">각 항목별로 버튼 이동 + 직접 숫자 입력(X/Y/글씨크기)이 가능합니다. 변경값은 저장됩니다.</div>
 
             <div class="text-move-list">
               <!-- 상단 -->
