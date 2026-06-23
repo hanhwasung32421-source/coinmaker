@@ -212,3 +212,26 @@ button.secondary{ background:#0c1220; }
   .app{ grid-template-columns:1fr; }
   .controls{ width:100%; min-width:0; max-width:none; }
 }
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.side-warning {
+  display: none;
+  font-size: 24px;
+  font-weight: 800;
+  text-align: center;
+  margin-top: 10px;
+  margin-bottom: 5px;
+}
+.side-warning.blink-active {
+  display: block;
+  animation: blink 0.8s ease-in-out infinite;
+}
+.warning-long {
+  color: #3da5ff;
+}
+.warning-short {
+  color: #fa4b4b;
+}
