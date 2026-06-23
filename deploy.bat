@@ -33,6 +33,10 @@ REM Commit message (optional)
 set "COMMIT_MSG=%~1"
 if "%COMMIT_MSG%"=="" set "COMMIT_MSG=deploy"
 
+REM Update build version (yyMMddHHmmss) on every commit
+for /f %%V in ('powershell -NoProfile -Command "(Get-Date).ToString(\"yyMMddHHmmss\")"') do set "BUILD_VERSION=%%V"
+powershell -NoProfile -Command "Set-Content -Path 'version.js' -Value ('window.APP_VERSION = \"' + '%BUILD_VERSION%' + '\";') -Encoding ASCII"
+
 REM Stage everything
 git add -A
 

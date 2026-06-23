@@ -11,6 +11,7 @@
   const ctx = canvas.getContext("2d");
   const toastEl = document.getElementById("toast");
   const centerTipEl = document.getElementById("centerTip");
+  const appVersionEl = document.getElementById("appVersion");
   // (프리셋/크롭 미리보기 UI 제거됨)
   const sideHintEl = document.getElementById("sideHint");
 
@@ -133,6 +134,16 @@
     requestAnimationFrame(() => {
       sideHintEl.classList.add("fadeout");
     });
+  }
+
+  function renderVersion() {
+    if (!appVersionEl) return;
+    const v = String(window.APP_VERSION || "").trim();
+    if (!v) {
+      appVersionEl.textContent = "";
+      return;
+    }
+    appVersionEl.textContent = v;
   }
 
   async function copyTextWithSelection(text) {
@@ -1489,6 +1500,7 @@
   }
 
   async function init() {
+    renderVersion();
     // Supabase 연결 확인
     if (!sb) {
       console.error("[supabase] client not initialized. Check supabase-js script loading.");
@@ -1499,6 +1511,7 @@
       // 원격 설정 먼저 적용 (가능한 경우)
       await loadSettingsFromSupabase();
     }
+    renderVersion();
 
     bind();
     bindSideUi();

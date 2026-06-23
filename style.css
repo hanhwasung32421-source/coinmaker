@@ -39,6 +39,18 @@ body{
   color:var(--text);
 }
 
+.app-version{
+  position: sticky;
+  top: 0;
+  z-index: 99999;
+  padding: 10px 24px;
+  font-size: 12px;
+  color: var(--muted);
+  background: rgba(11, 22, 25, .92);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  backdrop-filter: blur(6px);
+}
+
 .app{
   display:grid;
   /* 왼쪽(미리보기)은 고정 폭으로 해서, 넓은 화면에서 생기는 '중간 빈 공간'을 없앱니다. */
