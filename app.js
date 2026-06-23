@@ -2,7 +2,7 @@
 (() => {
   // 빌드 버전(로컬에서 index.html을 바로 열어도 표시되도록 코드에 내장)
   // 수정할 때마다 값을 갱신합니다. 포맷: yyMMddHHmmss
-  const BUILD_VERSION = "260623175229";
+  const BUILD_VERSION = "260623175654";
 
   const SUPABASE_URL = "https://dyfycrmltqosezmsufup.supabase.co";
   const SUPABASE_ANON_KEY =
@@ -970,8 +970,8 @@
         els.leverage.value = DEFAULTS.leverage;
         els.entry.value = DEFAULTS.entry;
         els.bgZoom.value = String(DEFAULTS.bgZoom.toFixed(3));
-        els.count.value = String(DEFAULTS.count);
-        els.prefix.value = DEFAULTS.prefix;
+        if (els.count) els.count.value = String(DEFAULTS.count);
+        if (els.prefix) els.prefix.value = DEFAULTS.prefix;
         bgShiftX = 0;
         bgShiftY = 28;
         setSide(DEFAULTS.side, { shouldSave: false });

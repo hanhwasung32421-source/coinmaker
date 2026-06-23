@@ -149,7 +149,7 @@ button.secondary{ background:#0c1220; }
 .side-btn.active{ background:rgba(10,191,127,.18); border-color:rgba(10,191,127,.55); }
 .bg-move{ display:grid; gap:8px; padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,.08); background:#0c1220; }
 .bg-move-row{ justify-content:center; }
-.bg-shift-inputs,.cloud-actions,.phrase-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.phrase-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 .span-2{ grid-column:1 / -1; }
 .preset-grid{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; }
 .preset-btn{ width:100%; white-space:nowrap; }
@@ -299,7 +299,10 @@ button.secondary{ background:#0c1220; }
         <div class="hint">복사가 안 되면 브라우저 보안 정책 때문일 수 있어요. 권장: 로컬 서버로 열기(예: <code>python -m http.server 8000 --directory c:\trae</code>)</div>
         <div class="generate-wrap">
           <button id="btnGenerate" class="primary" type="button">생성</button>
-          <div class="generate-hint">오른쪽에서 “생성 개수”를 입력한 뒤 생성 버튼을 누르세요.</div>
+          <div id="sideWarning" class="side-warning">
+            <span class="warning-long">LONG</span> / <span class="warning-short">SHORT</span> 확인요망
+          </div>
+          <div class="generate-hint">생성 버튼을 누르세요.</div>
         </div>
       </div>
 
@@ -344,26 +347,9 @@ button.secondary{ background:#0c1220; }
               <button id="btnShiftRight" class="secondary" type="button">오른쪽 1px</button>
             </div>
             <div class="bg-move-row"><button id="btnShiftDown" class="secondary" type="button">아래 1px</button></div>
-            <div class="bg-shift-inputs">
-              <label class="mini">배경 X<input id="inpBgShiftX" type="number" step="1" value="0" /></label>
-              <label class="mini">배경 Y<input id="inpBgShiftY" type="number" step="1" value="28" /></label>
-            </div>
           </div>
-
-          <label>생성 개수<input id="inpCount" type="number" min="1" step="1" value="1" /></label>
-          <label>파일명 접두사<input id="inpPrefix" type="text" value="screenshot" /></label>
         </div>
 
-        <div class="actions">
-          <button id="btnDownloadZip" class="primary" type="button">ZIP로 대량 생성</button>
-          <button id="btnReroll" class="secondary" type="button">랜덤 갱신</button>
-          <button id="btnReset" class="secondary" type="button">기본값</button>
-        </div>
-
-        <div class="cloud-actions">
-          <button id="btnCloudLoad" class="secondary" type="button">클라우드 불러오기</button>
-          <button id="btnCloudSave" class="secondary" type="button">클라우드 저장</button>
-        </div>
       </div>
 
       
@@ -374,6 +360,6 @@ button.secondary{ background:#0c1220; }
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="./app.js?v=260623175229"></script>
+    <script src="./app.js?v=260623175654"></script>
   </body>
 </html>
