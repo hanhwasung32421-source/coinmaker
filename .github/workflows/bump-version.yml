@@ -17,16 +17,14 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Update version.json
+      - name: Update version
         run: |
-          BUILD="$(TZ=Asia/Seoul date +'%y%m%d%H%M%S')"
-          echo "{\"build\":\"$BUILD\"}" > "version.json"
-          cat "version.json"
+          node scripts/bump_version.js
 
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add "version.json"
+          git add version.json app.js index.html
           git commit -m "chore: bump build version" || exit 0
           git push
